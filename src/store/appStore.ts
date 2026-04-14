@@ -710,8 +710,8 @@ export const useAppStore = create<AppState>()(
           // 게시글 목록을 서버에서 불러오는 액션
           loadPosts: async () => {
             try {
-              const fetchedPosts = await fetchAllPosts(); // community/community.ts의 fetchAllPosts 호출
-              set({ posts: fetchedPosts });
+              const response = await fetchAllPosts(0, 100); // community/community.ts의 fetchAllPosts 호출
+              set({ posts: response.content });
             } catch (error) {
               toast.error("게시글을 불러오는데 실패했습니다.");
             }

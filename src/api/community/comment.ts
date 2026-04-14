@@ -6,7 +6,7 @@ import { Comment } from "../../types/community/comment"; // Comment 타입 임�
 export const fetchCommentsByPostId = async (
   postId: string
 ): Promise<Comment[]> => {
-  const response = await apiClient.get(`/api/v1/comments/post/${postId}`);
+  const response = await apiClient.get(`/api/v2/comments/post/${postId}`);
   return response.data; // 컨트롤러 응답이 List<CommentResponseDTO>이므로 json.data가 아닐 수 있습니다.
 };
 
@@ -16,7 +16,7 @@ export const createComment = async (data: {
   postId: string; // 댓글을 작성할 게시글의 ID
   content: string; // 댓글 내용
 }): Promise<Comment> => {
-  const response = await apiClient.post("/api/v1/comments", data);
+  const response = await apiClient.post("/api/v2/comments", data);
   return response.data; // 컨트롤러 응답이 CommentResponseDTO이므로 json.data가 아닐 수 있습니다.
 };
 
@@ -28,12 +28,12 @@ export const updateComment = async (
     content: string; // 수정할 댓글 내용
   }
 ): Promise<Comment> => {
-  const response = await apiClient.patch(`/api/v1/comments/${commentId}`, data);
+  const response = await apiClient.patch(`/api/v2/comments/${commentId}`, data);
   return response.data; // 컨트롤러 응답이 CommentResponseDTO이므로 json.data가 아닐 수 있습니다.
 };
 
 // 댓글 삭제
 // DELETE /api/v1/comments/{commentId}
 export const deleteComment = async (commentId: string): Promise<void> => {
-  await apiClient.delete(`/api/v1/comments/${commentId}`);
+  await apiClient.delete(`/api/v2/comments/${commentId}`);
 };

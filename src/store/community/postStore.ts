@@ -11,11 +11,19 @@ import {
 
 interface PostState {
   posts: Post[];
-  lastFetched: number; // 마지막으로 데이터를 가져온 시간 (캐싱 목적)
+  lastFetched: number;
+  hasMore: boolean;
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
   setPosts: (posts: Post[]) => void;
-  // loadPosts 액션 추가
-  loadPosts: () => Promise<void>;
-  // addPost, updatePost, deletePost의 타입을 Promise를 반환하도록 수정
+  loadPosts: (
+    page?: number,
+    size?: number,
+    category?: string,
+    append?: boolean
+  ) => Promise<void>;
+  // ... rest of the interface
   addPost: (
     newPostData: Omit<
       Post,
@@ -50,17 +58,23 @@ interface PostState {
 export const usePostStore = create<PostState>((set, get) => ({
   posts: [],
   lastFetched: 0,
+  hasMore: true,
+  currentPage: 0,
+  totalPages: 0,
+  totalElements: 0,
   setPosts: (newPosts) => set({ posts: newPosts, lastFetched: Date.now() }),
 
   // loadPosts 액션 구현
-  loadPosts: async () => {
-    const CACHE_DURATION = 5 * 60 * 1000; // 5분 캐시
-    const { posts, lastFetched, setPosts, setLastFetched } = get();
-
+  loadPosts: async (page = 0, size = 10, category, append = false) => {
     try {
-      console.log("[usePostStore: 백엔드에서 게시글 로딩 시작]");
-      const data: any[] = await fetchAllPosts();
-      const mappedPosts: Post[] = data.map((item) => ({
+      console.log("[usePostStore: 백엔드에서 게시글 로딩 시작]", {
+        page,
+        size,
+        category,
+        append,
+      });
+      const response = await fetchAllPosts(page, size, category);
+      const mappedPosts: Post[] = response.content.map((item: any) => ({
         postId: item.postId,
         title: item.title,
         content: item.content,
@@ -69,7 +83,7 @@ export const usePostStore = create<PostState>((set, get) => ({
         likeCount: item.likeCount,
         reportCount: item.reportCount,
         createdAt: item.createdAt,
-        updatedAt: item.updatedAt ?? item.createdAt, // updatedAt이 없을 경우 createdAt 사용
+        updatedAt: item.updatedAt ?? item.createdAt,
         authorId: item.authorId,
         authorNickname: item.authorNickname,
         authorProfileImageUrl: item.authorProfileImageUrl,
@@ -79,14 +93,23 @@ export const usePostStore = create<PostState>((set, get) => ({
         userBookmarked: item.userBookmarked || false,
         deleted: item.deleted || false,
       }));
-      setPosts(mappedPosts);
-      setLastFetched(Date.now());
+
+      set((state) => ({
+        posts: append ? [...state.posts, ...mappedPosts] : mappedPosts,
+        lastFetched: Date.now(),
+        hasMore: !response.last,
+        currentPage: response.number,
+        totalPages: response.totalPages,
+        totalElements: response.totalElements,
+      }));
+
       console.log("[usePostStore: 게시글 로딩 완료]");
     } catch (error) {
       console.error("[usePostStore: 게시글 로딩 실패]", error);
-      // 오류 발생 시 posts를 비우거나 이전 상태를 유지할지 결정
-      setPosts([]);
-      throw error; // 오류를 다시 던져서 호출하는 쪽에서 처리할 수 있도록 합니다.
+      if (!append) {
+        set({ posts: [], hasMore: false });
+      }
+      throw error;
     }
   },
 

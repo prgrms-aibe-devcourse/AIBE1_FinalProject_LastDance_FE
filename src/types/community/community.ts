@@ -20,6 +20,18 @@ export interface Post {
   deleted: boolean; // ✅ 추가: 신고로 인한 삭제 여부
 }
 
+export interface PaginatedResponse<T> {
+  content: T[];
+  last: boolean;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+  first: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
 export interface PostDetailProps {
   post: Post;
   onBack: () => void;

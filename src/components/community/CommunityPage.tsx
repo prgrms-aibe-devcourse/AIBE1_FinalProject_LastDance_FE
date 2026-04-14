@@ -48,8 +48,16 @@ const CommunityPage: React.FC = () => {
   }, [location.pathname]);
   */
 
-  const { posts, loadPosts, deletePost, toggleLike, toggleBookmark } =
-    usePostStore();
+  const {
+    posts,
+    loadPosts,
+    deletePost,
+    toggleLike,
+    toggleBookmark,
+    hasMore,
+    currentPage: serverPage,
+    totalPages: serverTotalPages,
+  } = usePostStore();
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,26 +72,36 @@ const CommunityPage: React.FC = () => {
   const [editingPost, setEditingPost] = useState<Post | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  // 페이지 기억 기능 제거: localStorage에서 값을 불러오지 않고 1로 초기화합니다.
-  const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 15;
 
+  // 초기 로드 및 카테고리 변경 시
   useEffect(() => {
-    const fetchAndSetLoading = async () => {
+    const fetchInitialPosts = async () => {
       setIsLoading(true);
-      await loadPosts();
-      setIsLoading(false);
+      try {
+        await loadPosts(0, postsPerPage, selectedCategory, false);
+      } catch (error) {
+        toast.error("게시글을 불러오는 데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
     };
-    fetchAndSetLoading();
-  }, [user?.id, loadPosts]);
+    fetchInitialPosts();
+  }, [selectedCategory, loadPosts]);
 
-  // 페이지 기억 기능 제거: 이 useEffect 훅을 삭제합니다.
-  /*
-  useEffect(() => {
-    localStorage.setItem("communityCurrentPage", currentPage.toString());
-  }, [currentPage]);
-  */
+  const handleLoadMore = async () => {
+    if (!hasMore || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      await loadPosts(serverPage + 1, postsPerPage, selectedCategory, true);
+    } catch (error) {
+      toast.error("게시글을 더 불러오는 데 실패했습니다.");
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const totalLikes = useMemo(() => {
     return posts.reduce((sum, post) => sum + (post.likeCount || 0), 0);
@@ -109,7 +127,6 @@ const CommunityPage: React.FC = () => {
 
   const handleSearch = () => {
     setSearchQuery(tempSearchQuery);
-    setCurrentPage(1);
   };
 
   const handleSearchKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -158,6 +175,7 @@ const CommunityPage: React.FC = () => {
       );
     }
 
+    // API에서 이미 필터링되지만, 클라이언트 사이드 검색/필터와 조합을 위해 유지
     if (selectedCategory !== "all") {
       tempPosts = tempPosts.filter(
         (post) => post.category === selectedCategory
@@ -186,35 +204,6 @@ const CommunityPage: React.FC = () => {
 
     return tempPosts;
   }, [posts, searchQuery, selectedCategory, filterBy, sortBy]);
-
-  const totalPages = Math.ceil(processedPosts.length / postsPerPage);
-  const currentPosts = useMemo(() => {
-    const indexOfLastPost = currentPage * postsPerPage;
-    const indexOfFirstPost = indexOfLastPost - postsPerPage;
-    return processedPosts.slice(indexOfFirstPost, indexOfLastPost);
-  }, [processedPosts, currentPage, postsPerPage]);
-
-  const paginate = (pageNumber: number) => {
-    if (pageNumber < 1 || pageNumber > totalPages) return;
-    setCurrentPage(pageNumber);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxPageButtons = 5;
-    let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
-    let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-
-    if (endPage - startPage + 1 < maxPageButtons) {
-      startPage = Math.max(1, endPage - maxPageButtons + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i);
-    }
-    return pageNumbers;
-  };
 
   const handlePostEdit = (post: Post) => {
     setEditingPost(post);
@@ -272,7 +261,6 @@ const CommunityPage: React.FC = () => {
               key={category.id}
               onClick={() => {
                 setSelectedCategory(category.id);
-                setCurrentPage(1);
               }}
               className={`flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 selectedCategory === category.id
@@ -310,7 +298,6 @@ const CommunityPage: React.FC = () => {
                 key={option.key}
                 onClick={() => {
                   setSortBy(option.key as any);
-                  setCurrentPage(1);
                 }}
                 className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   sortBy === option.key
@@ -330,7 +317,6 @@ const CommunityPage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setFilterBy(filterBy === "bookmarked" ? "all" : "bookmarked");
-                setCurrentPage(1);
               }}
               className={`p-2 rounded-lg transition-colors ${
                 filterBy === "bookmarked"
@@ -350,7 +336,6 @@ const CommunityPage: React.FC = () => {
               whileTap={{ scale: 0.95 }}
               onClick={() => {
                 setFilterBy(filterBy === "liked" ? "all" : "liked");
-                setCurrentPage(1);
               }}
               className={`p-2 rounded-lg transition-colors ${
                 filterBy === "liked"
@@ -385,14 +370,14 @@ const CommunityPage: React.FC = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="space-y-4 min-h-[300px] flex items-center justify-center"
+        className="space-y-4 min-h-[300px]"
       >
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center">
+        {isLoading && posts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12">
             <div className="w-16 h-16 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-gray-600">게시글을 불러오는 중입니다...</p>
           </div>
-        ) : currentPosts.length === 0 ? (
+        ) : processedPosts.length === 0 ? (
           <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-gray-200 w-full">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <MessageCircle className="w-8 h-8 text-gray-400" />
@@ -408,12 +393,12 @@ const CommunityPage: React.FC = () => {
           </div>
         ) : (
           <div className="w-full space-y-4">
-            {currentPosts.map((post, index) => (
+            {processedPosts.map((post, index) => (
               <motion.div
                 key={post.postId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: (index % postsPerPage) * 0.05 }}
               >
                 <PostCard
                   post={post}
@@ -427,65 +412,26 @@ const CommunityPage: React.FC = () => {
             ))}
           </div>
         )}
-      </motion.div>
 
-      {!isLoading && totalPages > 1 && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="flex justify-center items-center space-x-2 py-6"
-        >
-          <button
-            onClick={() => paginate(1)}
-            disabled={currentPage === 1}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-            aria-label="맨 처음 페이지"
-          >
-            <span className="sr-only">맨 처음</span>
-            <ChevronsLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          <button
-            onClick={() => paginate(currentPage - 1)}
-            disabled={currentPage === 1}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="이전 페이지"
-          >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
-          </button>
-          {getPageNumbers().map((number) => (
-            <button
-              key={number}
-              onClick={() => paginate(number)}
-              className={`px-4 py-2 rounded-full font-medium transition-colors ${
-                currentPage === number
-                  ? "bg-accent-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-              aria-current={currentPage === number ? "page" : undefined}
+        {!isLoading && hasMore && (
+          <div className="flex justify-center pt-8 pb-12">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              className="flex items-center space-x-2 px-8 py-3 bg-white border-2 border-primary-200 text-primary-700 rounded-2xl font-semibold hover:bg-primary-50 transition-all shadow-sm hover:shadow-md disabled:opacity-50"
             >
-              {number}
-            </button>
-          ))}
-          <button
-            onClick={() => paginate(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            aria-label="다음 페이지"
-          >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
-          </button>
-          <button
-            onClick={() => paginate(totalPages)}
-            disabled={currentPage === totalPages}
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-            aria-label="맨 끝 페이지"
-          >
-            <span className="sr-only">맨 끝</span>
-            <ChevronsRight className="w-5 h-5 text-gray-600" />
-          </button>
-        </motion.div>
-      )}
+              {isLoadingMore ? (
+                <div className="w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Plus className="w-5 h-5" />
+              )}
+              <span>{isLoadingMore ? "불러오는 중..." : "게시글 더 보기"}</span>
+            </motion.button>
+          </div>
+        )}
+      </motion.div>
       {isCreateModalOpen && (
         <CreatePostModal
           post={editingPost}

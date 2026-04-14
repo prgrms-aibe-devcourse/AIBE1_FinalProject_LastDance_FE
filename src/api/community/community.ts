@@ -1,15 +1,26 @@
 import { apiClient } from "../../utils/api";
-import { Post } from "../../types/community/community"; // Post 타입 임포트
+import { Post, PaginatedResponse } from "../../types/community/community"; // Post, PaginatedResponse 타입 임포트
 
 //전체 게시글 목록 가져오기
-export const fetchAllPosts = async (): Promise<Post[]> => {
-  const response = await apiClient.get("/api/v1/community");
+export const fetchAllPosts = async (
+  page: number = 0,
+  size: number = 10,
+  category?: string
+): Promise<PaginatedResponse<Post>> => {
+  const params = new URLSearchParams();
+  params.append("page", page.toString());
+  params.append("size", size.toString());
+  if (category && category !== "all") {
+    params.append("category", category);
+  }
+
+  const response = await apiClient.get(`/api/v2/community?${params.toString()}`);
   return response.data.data;
 };
 
 // 게시글 상세 가져오기
 export const fetchPostById = async (postId: string): Promise<Post> => {
-  const response = await apiClient.get(`/api/v1/community/${postId}`);
+  const response = await apiClient.get(`/api/v2/community/${postId}`);
   return response.data.data;
 };
 
@@ -22,7 +33,7 @@ export const createPost = async (data: {
   authorNickname: string; // 추가
   authorProfileImageUrl?: string; // 추가 (optional일 경우)
 }): Promise<Post> => {
-  const response = await apiClient.post("/api/v1/community", data);
+  const response = await apiClient.post("/api/v2/community", data);
   return response.data.data;
 };
 
@@ -36,25 +47,25 @@ export const updatePost = async (
     category: string;
   }>
 ): Promise<Post> => {
-  const response = await apiClient.patch(`/api/v1/community/${postId}`, data);
+  const response = await apiClient.patch(`/api/v2/community/${postId}`, data);
   return response.data.data;
 };
 
 // 게시글 삭제
 export const deletePost = async (postId: string): Promise<void> => {
-  await apiClient.delete(`/api/v1/community/${postId}`);
+  await apiClient.delete(`/api/v2/community/${postId}`);
 };
 
 // 게시글 좋아요/좋아요 취소
 export const togglePostLike = async (postId: string): Promise<boolean> => {
-  const response = await apiClient.post(`/api/v1/community/${postId}/likes`);
+  const response = await apiClient.post(`/api/v2/community/${postId}/likes`);
   return response.data.data; // 좋아요 상태(true: 좋아요, false: 좋아요 취소)를 반환합니다.
 };
 
 // 게시글 북마크/북마크 취소
 export const togglePostBookmark = async (postId: string): Promise<boolean> => {
   const response = await apiClient.post(
-    `/api/v1/community/${postId}/bookmarks`
+    `/api/v2/community/${postId}/bookmarks`
   );
   return response.data.data;
 };
