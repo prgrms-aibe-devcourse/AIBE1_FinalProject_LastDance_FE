@@ -28,6 +28,7 @@ import { FaGoogle, FaComment } from "react-icons/fa";
 import { SiNaver } from "react-icons/si";
 import Footer from "../layout/Footer";
 import { useAuthStore } from "../../store/authStore.ts";
+import { MAIN_PAGE_IMAGE_URL } from "../../config/properties";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -163,9 +164,6 @@ const HomePage: React.FC = () => {
   const heroScale = useTransform(heroProgress, [0, 1], [1, 0.8]);
   const logoScale = useTransform(heroProgress, [0, 0.5, 1], [1, 1.2, 0.8]);
 
-  const mainPageImageUrl =
-    "https://lastdance-s3-bucket.s3.ap-northeast-2.amazonaws.com/main-page-image/";
-
   // Feature sections
   const features = [
     {
@@ -175,7 +173,7 @@ const HomePage: React.FC = () => {
         "그룹을 생성하고 멤버를 초대하여 공동의 목표를 설정하고 관리하세요. 그룹 전용 캘린더, 할일, 가계부를 통해 효율적으로 협업할 수 있습니다.",
       icon: Users,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "9.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/9.png`,
       path: "/login",
     },
     {
@@ -185,7 +183,7 @@ const HomePage: React.FC = () => {
         "개인과 그룹의 모든 활동을 분석하고 시각화합니다. 할일 완료율, 지출 패턴, 일정 현황을 한 곳에서 확인하세요.",
       icon: BarChart3,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "1.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/1.png`,
       path: "/dashboard",
     },
     {
@@ -195,7 +193,7 @@ const HomePage: React.FC = () => {
         "개인과 그룹 일정을 하나의 캘린더에서 관리하세요. 월간, 주간, 일간 뷰로 일정을 효율적으로 계획할 수 있습니다.",
       icon: Calendar,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "2.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/2.png`,
       path: "/calendar",
     },
     {
@@ -205,7 +203,7 @@ const HomePage: React.FC = () => {
         "집안일을 공평하게 분배하고, 진행 상황을 실시간으로 추적하세요. 우선순위 설정과 마감일 알림으로 놓치는 일이 없습니다.",
       icon: CheckSquare,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "3.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/3.png`,
       path: "/tasks",
     },
     {
@@ -215,7 +213,7 @@ const HomePage: React.FC = () => {
         "공동 지출을 자동으로 분할하고, 카테고리별 분석을 제공합니다. AI가 소비 패턴을 파악하여 맞춤형 피드백과 절약 팁을 제공하여 현명한 소비를 돕습니다.",
       icon: CreditCard,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "4.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/4.png`,
       path: "/expenses",
     },
     {
@@ -225,7 +223,7 @@ const HomePage: React.FC = () => {
         "룰렛, 가위바위보, 주사위 등 3가지 다양한 게임으로 당번을 공정하게 정하세요. 게임 결과는 자동으로 기록됩니다.",
       icon: Gamepad2,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "5.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/5.png`,
       path: "/games",
     },
     {
@@ -235,7 +233,7 @@ const HomePage: React.FC = () => {
         "AI가 각 분쟁에 대한 양측의 입장을 분석하고, 공정하게 판단하여 해결책을 제시합니다.",
       icon: Bot,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "6.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/6.png`,
       path: "/ai-assistant",
     },
     {
@@ -245,7 +243,7 @@ const HomePage: React.FC = () => {
         "생활팁, 레시피, 청소법 등을 공유하고 다른 사용자들과 소통하세요. 카테고리별로 정리된 유용한 정보들을 만나보세요.",
       icon: Users,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "7.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/7.png`,
       path: "/community",
     },
     {
@@ -255,7 +253,7 @@ const HomePage: React.FC = () => {
         "청년들을 위한 다양한 정책 정보와 혜택을 한곳에서 확인하세요. 주거, 취업, 창업, 교육 등 분야별 정책을 쉽게 찾아보세요.",
       icon: ExternalLink,
       color: "from-primary-500 to-primary-600",
-      image: mainPageImageUrl + "8.png",
+      image: `${MAIN_PAGE_IMAGE_URL}/8.png`,
       path: "/youth-policy",
     },
   ];
