@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
   }
 
   // 운영환경: 절대 URL 사용
-  return envUrl || "https://api.woori-zip.lastdance.store";
+  return envUrl || "52.78.132.28:8080";
 };
 
 export const apiClient = axios.create({

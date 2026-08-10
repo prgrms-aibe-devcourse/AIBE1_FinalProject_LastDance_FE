@@ -26,8 +26,10 @@ async function checkBackend() {
   const endpoints = [
     'http://localhost:8080',
     'http://localhost:8080/oauth2/authorization/google',
-    'https://api.woori-zip.lastdance.store',
-    'https://api.woori-zip.lastdance.store/oauth2/authorization/google'
+    // 'https://api.woori-zip.lastdance.store',
+    'http://52.78.132.28:8080/',
+    // 'https://api.woori-zip.lastdance.store/oauth2/authorization/google'
+    'http://52.78.132.28:8080/oauth2/authorization/google'
   ];
 
   for (const endpoint of endpoints) {
