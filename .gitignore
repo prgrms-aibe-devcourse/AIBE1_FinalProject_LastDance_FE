@@ -167,3 +167,6 @@ storybook-static
 .yarn/install-state.gz
 .pnp.*
 .env
+
+
+.env.production
